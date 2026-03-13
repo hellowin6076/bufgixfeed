@@ -47,7 +47,7 @@ def setup_loggers(bot_token, chat_id):
     send_logger = logging.getLogger("send")
     send_logger.setLevel(logging.INFO)
     send_handler = TimedRotatingFileHandler(
-        "logs/send.log", when="W0", interval=1, backupCount=4, encoding="utf-8"
+        "logs/send.log", when="W0", interval=1, backupCount=0, encoding="utf-8"
     )
     send_handler.setFormatter(formatter)
     send_logger.addHandler(send_handler)
