@@ -2,6 +2,7 @@ import requests
 import os
 import sqlite3
 from datetime import datetime, timedelta
+from logger import get_send_logger
 
 CITY = "Osaka"
 DB_PATH = "data/weather.db"
@@ -23,8 +24,7 @@ def init_db():
 def save_today(temp_max, temp_min, feels_like, humidity, description):
     conn = sqlite3.connect(DB_PATH)
     today = datetime.now().strftime("%Y-%m-%d")
-    conn.execute('''INSERT OR REPLACE INTO weather_history
-        VALUES (?, ?, ?, ?, ?, ?)''',
+    conn.execute('''INSERT OR REPLACE INTO weather_history VALUES (?, ?, ?, ?, ?, ?)''',
         (today, temp_max, temp_min, feels_like, humidity, description))
     conn.commit()
     conn.close()
@@ -67,13 +67,10 @@ async def send_weather(bot, chat_id):
     humidity_avg = int(sum(humidities) / len(humidities))
     desc_today = descriptions[0]
 
-    # 어제 데이터 불러오기
     yesterday = load_yesterday()
 
     message = "🌤 *오사카 날씨*\n"
     message += "━━━━━━━━━━━━━━━\n"
-
-    # 시간대별
     for item in items:
         time = item["dt_txt"][11:16]
         temp = item["main"]["temp"]
@@ -83,14 +80,12 @@ async def send_weather(bot, chat_id):
         message += f"🕐 {time} | 🌡 {temp:.1f}°C (체감 {feel:.1f}°C)\n"
         message += f"   {desc} | 💧 습도 {humidity}%\n\n"
 
-    # 오늘 요약
     message += "━━━━━━━━━━━━━━━\n"
     message += f"📊 *오늘 요약*\n"
     message += f"🌡 최고 {temp_max:.1f}°C / 최저 {temp_min:.1f}°C\n"
     message += f"🤔 평균 체감 {feels_avg:.1f}°C\n"
     message += f"💧 평균 습도 {humidity_avg}%\n"
 
-    # 어제 비교
     if yesterday:
         _, y_max, y_min, y_feels, y_humidity, y_desc = yesterday
         message += "\n📅 *어제 대비*\n"
@@ -100,7 +95,6 @@ async def send_weather(bot, chat_id):
         if desc_today != y_desc:
             message += f"🌈 날씨 {y_desc} → {desc_today}\n"
 
-    # 오늘 데이터 저장
     save_today(temp_max, temp_min, feels_avg, humidity_avg, desc_today)
-
+    get_send_logger().info(f"\n{message}")
     await bot.send_message(chat_id=chat_id, text=message, parse_mode="Markdown")

@@ -1,5 +1,6 @@
 import requests
 import os
+from logger import get_send_logger
 
 async def send_youtube_trends(bot, chat_id):
     url = "https://www.googleapis.com/youtube/v3/videos"
@@ -23,4 +24,5 @@ async def send_youtube_trends(bot, chat_id):
         video_id = item["id"]
         message += f"{i}. {title}\n"
         message += f"   📺 {channel} | 🔗 https://youtu.be/{video_id}\n\n"
+    get_send_logger().info(f"\n{message}")
     await bot.send_message(chat_id=chat_id, text=message)

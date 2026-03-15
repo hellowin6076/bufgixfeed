@@ -1,5 +1,6 @@
 import requests
 from datetime import datetime, timezone, timedelta
+from logger import get_send_logger
 
 KST = timezone(timedelta(hours=9))
 
@@ -11,6 +12,10 @@ async def send_football_preview(bot, chat_id):
     if not events:
         return
 
+    now_kst = datetime.now(KST)
+    start = now_kst.replace(hour=15, minute=0, second=0, microsecond=0)
+    end = start + timedelta(hours=24)
+
     message = "⚽ *EPL 오늘의 경기*\n"
     message += "━━━━━━━━━━━━━━━\n"
 
@@ -20,13 +25,18 @@ async def send_football_preview(bot, chat_id):
     for event in events:
         name = event['name']
         utc_time = datetime.strptime(event['date'], "%Y-%m-%dT%H:%MZ").replace(tzinfo=timezone.utc)
-        kst_time = utc_time.astimezone(KST).strftime("%H:%M")
+        kst_time = utc_time.astimezone(KST)
+
+        if not (start <= kst_time < end):
+            continue
+
+        kst_str = kst_time.strftime("%m/%d %H:%M")
         status = event['status']['type']['description']
 
         if 'Liverpool' in name:
-            liverpool_lines.append(f"🔴 {name}\n   🕐 {kst_time} KST | {status}")
+            liverpool_lines.append(f"🔴 {name}\n   🕐 {kst_str} KST | {status}")
         else:
-            other_lines.append(f"⚪ {name}\n   🕐 {kst_time} KST | {status}")
+            other_lines.append(f"⚪ {name}\n   🕐 {kst_str} KST | {status}")
 
     if not liverpool_lines and not other_lines:
         return
@@ -36,4 +46,5 @@ async def send_football_preview(bot, chat_id):
     for line in other_lines:
         message += line + "\n\n"
 
+    get_send_logger().info(f"\n{message}")
     await bot.send_message(chat_id=chat_id, text=message, parse_mode="Markdown")

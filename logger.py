@@ -54,3 +54,6 @@ def setup_loggers(bot_token, chat_id):
     send_logger.addHandler(tg_handler)
 
     return run_logger, send_logger
+
+def get_send_logger():
+    return logging.getLogger("send")

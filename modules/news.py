@@ -1,5 +1,6 @@
 import feedparser
 from deep_translator import GoogleTranslator
+from logger import get_send_logger
 
 KOREAN_NEWS_URL = "https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko"
 JAPANESE_NEWS_URL = "https://news.google.com/rss?hl=ja&gl=JP&ceid=JP:ja"
@@ -11,6 +12,7 @@ async def send_korean_news(bot, chat_id):
     for i, entry in enumerate(feed.entries[:10], 1):
         message += f"{i}. {entry.title}\n"
         message += f"   🔗 {entry.link}\n\n"
+    get_send_logger().info(f"\n{message}")
     await bot.send_message(chat_id=chat_id, text=message, parse_mode="Markdown")
 
 async def send_japanese_news(bot, chat_id):
@@ -24,4 +26,5 @@ async def send_japanese_news(bot, chat_id):
             title = entry.title
         message += f"{i}. {title}\n"
         message += f"   🔗 {entry.link}\n\n"
+    get_send_logger().info(f"\n{message}")
     await bot.send_message(chat_id=chat_id, text=message, parse_mode="Markdown")
